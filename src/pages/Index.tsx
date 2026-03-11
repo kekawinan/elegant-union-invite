@@ -1,6 +1,163 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import floralBorder from "@/assets/floral-border.png";
 import islamicOrnament from "@/assets/islamic-ornament.png";
+
+/* ── Islamic-style hexagonal corner motif (no overlap, slow rotation) ── */
+const HEX_STROKE = "rgba(180, 140, 80, 0.35)";
+const HEX_FILL = "rgba(180, 140, 80, 0.08)";
+const ROTATION_SPEED = 0.00012; // radians per ms — slow rotation
+
+function drawHexagon(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+  rotation: number,
+  lineScale: number
+) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 6 + rotation;
+    const x = cx + radius * Math.cos(angle);
+    const y = cy + radius * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = HEX_FILL;
+  ctx.fill();
+  ctx.strokeStyle = HEX_STROKE;
+  ctx.lineWidth = 1.5 * lineScale;
+  ctx.stroke();
+}
+
+/** Organic bloom: hexagons placed by angle and distance from a soft center — no grid, no right angles. */
+function getHexagonPositions(
+  size: number,
+  position: "top-left" | "bottom-right"
+): { cx: number; cy: number; radius: number; lineScale: number }[] {
+  const pad = size * 0.1;
+  const scale = size * 0.44;
+
+  // Hand-picked angles (radians) and distances — gentle arc, not 0/90°
+  const layout = [
+    { angle: 0.35, dist: 0.22, radius: 0.26, lineScale: 1 },
+    { angle: 1.15, dist: 0.52, radius: 0.18, lineScale: 0.9 },
+    { angle: 2.0, dist: 0.38, radius: 0.2, lineScale: 0.92 },
+    { angle: 2.95, dist: 0.58, radius: 0.15, lineScale: 0.85 },
+    { angle: 3.9, dist: 0.44, radius: 0.16, lineScale: 0.86 },
+    { angle: 4.8, dist: 0.5, radius: 0.19, lineScale: 0.88 },
+  ];
+
+  if (position === "top-left") {
+    const ax = pad + scale * 0.6;
+    const ay = pad + scale * 0.55;
+    return layout.map(({ angle, dist, radius, lineScale }) => ({
+      cx: ax + scale * dist * Math.cos(angle),
+      cy: ay + scale * dist * Math.sin(angle),
+      radius: scale * radius,
+      lineScale,
+    }));
+  }
+  const ax = size - (pad + scale * 0.6);
+  const ay = size - (pad + scale * 0.55);
+  return layout.map(({ angle, dist, radius, lineScale }) => ({
+    cx: ax - scale * dist * Math.cos(angle),
+    cy: ay - scale * dist * Math.sin(angle),
+    radius: scale * radius,
+    lineScale,
+  }));
+}
+
+function useHexagonCanvas(position: "top-left" | "bottom-right") {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const startTimeRef = useRef<number>(Date.now());
+
+  const draw = useRef(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = Math.min(window.devicePixelRatio ?? 1, 2);
+    const size = Math.min(480, Math.max(280, Math.min(window.innerWidth, window.innerHeight) * 0.5));
+    const pixelSize = Math.round(size * dpr);
+    const elapsed = Date.now() - startTimeRef.current;
+    const rotation = (elapsed * ROTATION_SPEED) % (Math.PI * 2);
+    const dir = position === "bottom-right" ? -1 : 1;
+    const positions = getHexagonPositions(size, position);
+
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, size, size);
+
+    const phaseOffsets = [0, 0.9, 1.7, 2.6, 3.4, 4.2];
+    positions.forEach(({ cx, cy, radius, lineScale }, i) => {
+      drawHexagon(ctx, cx, cy, radius, rotation * dir + phaseOffsets[i], lineScale);
+    });
+
+    ctx.restore();
+  });
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const dpr = Math.min(window.devicePixelRatio ?? 1, 2);
+    const size = Math.min(480, Math.max(280, Math.min(window.innerWidth, window.innerHeight) * 0.5));
+    const pixelSize = Math.round(size * dpr);
+    canvas.width = pixelSize;
+    canvas.height = pixelSize;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+    draw.current();
+  }, [position]);
+
+  useEffect(() => {
+    let rafId: number;
+    const tick = () => {
+      draw.current();
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [position]);
+
+  useEffect(() => {
+    const onResize = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const dpr = Math.min(window.devicePixelRatio ?? 1, 2);
+      const size = Math.min(480, Math.max(280, Math.min(window.innerWidth, window.innerHeight) * 0.5));
+      const pixelSize = Math.round(size * dpr);
+      canvas.width = pixelSize;
+      canvas.height = pixelSize;
+      canvas.style.width = `${size}px`;
+      canvas.style.height = `${size}px`;
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [position]);
+
+  return canvasRef;
+}
+
+const HexagonDecoration = () => (
+  <>
+    <div
+      className="pointer-events-none fixed left-0 top-0 z-0"
+      aria-hidden="true"
+    >
+      <canvas ref={useHexagonCanvas("top-left")} />
+    </div>
+    <div
+      className="pointer-events-none fixed bottom-0 right-0 z-0"
+      aria-hidden="true"
+    >
+      <canvas ref={useHexagonCanvas("bottom-right")} />
+    </div>
+  </>
+);
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -37,14 +194,6 @@ const OpeningSection = () => (
     initial="hidden"
     animate="visible"
   >
-    {/* Floral border as background */}
-    <img
-      src={floralBorder}
-      alt=""
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30"
-    />
-
     <motion.p
       className="relative z-10 font-arabic text-3xl leading-relaxed text-foreground sm:text-4xl"
       variants={fadeUp}
@@ -82,7 +231,6 @@ const OpeningSection = () => (
     </motion.p>
 
     <motion.div className="relative z-10 my-8" variants={fadeUp} custom={5}>
-      <IslamicOrnamentDivider />
     </motion.div>
 
     <motion.blockquote
@@ -146,7 +294,6 @@ const HeroSection = () => (
     </motion.h1>
 
     <motion.div className="mt-8" variants={fadeUp} custom={5}>
-      <IslamicOrnamentDivider />
     </motion.div>
   </motion.section>
 );
@@ -238,7 +385,7 @@ const ClosingSection = () => (
   >
     <motion.div variants={fadeUp} custom={0}>
       <a
-        href="#"
+        href="https://maps.app.goo.gl/mVLPq2KeCNqvzA1V7?g_st=ic"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-3 rounded-lg border-2 border-gold bg-primary px-8 py-4 text-lg font-semibold text-primary-foreground shadow-md transition-all duration-300 hover:bg-olive hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-background"
@@ -260,7 +407,6 @@ const ClosingSection = () => (
     </motion.div>
 
     <motion.div className="mt-12" variants={fadeUp} custom={2}>
-      <IslamicOrnamentDivider className="mb-6" />
       <p className="font-arabic text-xl text-foreground sm:text-2xl">
         وَالسَّلاَمُ عَلَيْكُمْ وَرَحْمَةُ اللهِ وَبَرَكَاتُهُ
       </p>
@@ -273,13 +419,14 @@ const ClosingSection = () => (
 
 const Index = () => {
   return (
-    <main className="mx-auto max-w-3xl overflow-hidden">
+    <main className="relative mx-auto max-w-3xl overflow-hidden">
+      <HexagonDecoration />
       <OpeningSection />
+      <br />
       <HeroSection />
       <EventDetailsSection />
       <ClosingSection />
       <footer className="pb-10 pt-4 text-center text-sm text-muted-foreground">
-        <p>Dengan cinta &amp; rasa syukur</p>
       </footer>
     </main>
   );
