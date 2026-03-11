@@ -382,7 +382,7 @@ const EventDetailsSection = () => (
           </span>
         </div>
         <p className="text-xl font-medium text-foreground md:text-2xl">
-          09:00 – 14:00 WIB
+          10:00 – 14:00 WIB
         </p>
       </motion.div>
 
