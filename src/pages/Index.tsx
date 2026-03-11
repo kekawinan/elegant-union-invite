@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import islamicOrnament from "@/assets/islamic-ornament.png";
 
@@ -141,6 +141,41 @@ function useHexagonCanvas(position: "top-left" | "bottom-right") {
 
   return canvasRef;
 }
+
+/* ── Scroll indicator: bounce up/down at bottom center ── */
+const ScrollIndicator = () => {
+  const [visible, setVisible] = useState(true);
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY < 120);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const scrollDown = () => window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+  if (!visible) return null;
+  return (
+    <motion.button
+      type="button"
+      onClick={scrollDown}
+      className="pointer-events-auto fixed bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-0.5 rounded-full border-2 border-gold-light/60 bg-background/80 px-4 py-2.5 shadow-md backdrop-blur-sm transition hover:border-gold hover:bg-card/90 focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-background"
+      aria-label="Scroll ke bawah"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 1.2 }}
+    >
+      <motion.span
+        className="flex flex-col text-gold"
+        animate={{ y: [0, 6, 0] }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M12 5v14" />
+          <path d="m19 12-7 7-7-7" />
+        </svg>
+      </motion.span>
+      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Scroll</span>
+    </motion.button>
+  );
+};
 
 const HexagonDecoration = () => (
   <>
@@ -401,8 +436,14 @@ const ClosingSection = () => (
     <motion.div className="mt-14" variants={fadeUp} custom={1}>
       <GoldDivider className="mb-8" />
       <p className="mx-auto max-w-md text-lg leading-relaxed text-muted-foreground sm:text-xl">
-        Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila
-        Bapak/Ibu/Saudara/i berkenan hadir untuk memberikan do'a restu.
+      Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Rekan-rekan berkenan hadir dan memberikan doa restu di acara pernikahan kami.  
+      </p>
+    </motion.div>
+    
+    <motion.div className="mt-14" variants={fadeUp} custom={1}>
+      <GoldDivider className="mb-8" />
+      <p className="mx-auto max-w-md text-lg leading-relaxed text-muted-foreground sm:text-xl">
+      Karena keterbatasan jarak dan waktu tidak dapat mengirimkan undangan ini secara langsung, maka melalui e-invitation ini dapat menjadi pengganti undangan resmi sehingga tujuan kami tersampaikan.
       </p>
     </motion.div>
 
@@ -421,6 +462,7 @@ const Index = () => {
   return (
     <main className="relative mx-auto max-w-3xl overflow-hidden">
       <HexagonDecoration />
+      <ScrollIndicator />
       <OpeningSection />
       <br />
       <HeroSection />
