@@ -16,11 +16,17 @@ export default {
       fontFamily: {
         serif: ['Playfair Display', 'Georgia', 'Times New Roman', 'serif'],
         sans: ['Source Sans 3', 'Segoe UI', 'Tahoma', 'sans-serif'],
+        arabic: ['Amiri', 'Traditional Arabic', 'serif'],
       },
       colors: {
         gold: {
           DEFAULT: "hsl(var(--gold))",
           light: "hsl(var(--gold-light))",
+          dark: "hsl(var(--gold-dark))",
+        },
+        olive: {
+          DEFAULT: "hsl(var(--olive))",
+          light: "hsl(var(--olive-light))",
         },
         "cream-deep": "hsl(var(--cream-deep))",
         border: "hsl(var(--border))",
