@@ -420,7 +420,7 @@ const ClosingSection = () => (
   >
     <motion.div variants={fadeUp} custom={0}>
       <a
-        href="https://maps.app.goo.gl/mVLPq2KeCNqvzA1V7?g_st=ic"
+        href="https://maps.app.goo.gl/afCKtsGgm5JeDRcM8"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-3 rounded-lg border-2 border-gold bg-primary px-8 py-4 text-lg font-semibold text-primary-foreground shadow-md transition-all duration-300 hover:bg-olive hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gold focus:ring-offset-2 focus:ring-offset-background"
@@ -436,7 +436,7 @@ const ClosingSection = () => (
     <motion.div className="mt-14" variants={fadeUp} custom={1}>
       <GoldDivider className="mb-8" />
       <p className="mx-auto max-w-md text-lg leading-relaxed text-muted-foreground sm:text-xl">
-      Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Rekan-rekan berkenan hadir dan memberikan doa restu di acara pernikahan kami.  
+      Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Rekan-rekan berkenan hadir dan memberikan doa di acara pernikahan kami.  
       </p>
     </motion.div>
     
